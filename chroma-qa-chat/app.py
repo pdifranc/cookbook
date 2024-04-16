@@ -1,6 +1,9 @@
 from typing import List
 from pathlib import Path
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.embeddings import BedrockEmbeddings
+# from langchain_community.llms.bedrock import Bedrock
+from langchain_community.chat_models import BedrockChat
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import StrOutputParser
 from langchain_community.document_loaders import (
@@ -15,11 +18,27 @@ from langchain.callbacks.base import BaseCallbackHandler
 
 import chainlit as cl
 
+def get_llm():
+        
+    model_kwargs = { #anthropic
+        "max_tokens": 512,
+        "temperature": 0, 
+        "top_k": 250, 
+        "top_p": 1, 
+        "stop_sequences": ["\n\nHuman:"] 
+    }
+    
+    llm = BedrockChat(
+        model_id="anthropic.claude-3-sonnet-20240229-v1:0", #set the foundation model
+        model_kwargs=model_kwargs) #configure the properties for Claude
+    
+    return llm
 
 chunk_size = 1024
 chunk_overlap = 50
 
-embeddings_model = OpenAIEmbeddings()
+# embeddings_model = OpenAIEmbeddings()
+embeddings_model = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1")
 
 PDF_STORAGE_PATH = "./pdfs"
 
@@ -56,7 +75,10 @@ def process_pdfs(pdf_storage_path: str):
 
 
 doc_search = process_pdfs(PDF_STORAGE_PATH)
-model = ChatOpenAI(model_name="gpt-4", streaming=True)
+# model = ChatOpenAI(model_name="gpt-4", streaming=True)
+
+model = get_llm()
+
 
 
 @cl.on_chat_start
